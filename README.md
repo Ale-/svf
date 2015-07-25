@@ -1,0 +1,3 @@
+# svf
+A bash script to generate tint SVG filters for CSS stylesheets. Accepts an arbitrary number of colors in hexadecimal format (FF0000, for instance) and creates a svg file that contains the svg filters necessary to tint images in CSS using a feMatrix.
+Usage: svf col1 col2 col3 ...
