@@ -1,0 +1,64 @@
+#!/bin/bash
+
+# svf. SVG filter generator. 
+#
+# Accepts an arbitrary number of colors in hexadecimal format (FF0000, for instance) and creates a svg file
+# that contains the svg filters necessary to tint images in CSS using a feMatrix.
+#
+# Copyright (c) 2015 Ale González
+# This software is free; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License version 2.1 as published by the Free Software Foundation. 
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+ 
+# You should have received a copy of the GNU Lesser General
+# Public License along with this library; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330,
+# Boston, MA 02111-1307 USA
+
+
+function displayHelp() 
+{
+cat <<EOF
+Usage: svf col1 col2 col3 ...
+Purpose: Accepts an arbitrary number of colors in hexadecimal format (FF0000, for instance) and creates a svg file that contains the svg filters necessary to tint images in CSS using a feMatrix.
+-h Show HELP (this output)
+EOF
+}
+
+while getopts :nh o; do
+	case $o in
+	    h) displayHelp; exit ;;
+	esac
+done
+
+# ok. let's do it
+# Use 'f.svg' as default name. If it exists add an index to avoid overwrite past filters
+
+i=0; filename='f.svg'
+while [ -f $filename ]
+do 
+	let i=i+1 
+	filename="f${i}.svg"
+done
+
+echo "<svg xmlns='http://www.w3.org/2000/svg' version='1.1'>" >> $filename
+for c in $@
+do
+	# given a color, extracts its components using binary shifting and masking 
+	# uses bc to normalize the range of values from 0-255 to 0f-1f, 'scale' sets the float precision
+	color=`echo "ibase=16; $c" | bc`
+	r=`echo "scale=3; $(((${color} >> 16) & 255))/255" | bc`
+	g=`echo "scale=3; $(((${color} >>  8) & 255))/255" | bc`
+	b=`echo "scale=3; $(((${color}      ) & 255))/255" | bc`
+	# adds filter to svg file using as unique index the hex identifier of the color
+	echo "<filter id='${c}'><feColorMatrix type='matrix' color-interpolation-filters='sRGB' values='${r} 0 0 0 0 0 ${g} 0 0 0 0 0 ${b} 0 0 0 0 0 1 0'/></filter>" >> $filename
+done
+echo "</svg>" >> $filename
+
+# done, check results
+echo "Done! Output:" && echo
+cat $filename
